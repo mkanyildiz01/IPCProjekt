@@ -55,42 +55,6 @@ def create_commands(path, start):
     return commands
 
 
-def calc_possible_new_fields(val, coor, map):
-    my_range = 0
-    if "G" in val:
-        my_range = 5
-    elif "M" in val:
-        my_range = 7
-    elif "L" in val:
-        my_range = 0
-    else:
-        my_range = 3
-
-    fields_in_range = []
-
-    for y in range(coor[1] - (my_range // 2), coor[1] + (my_range // 2 + 1)):
-        for x in range(coor[0] - (my_range // 2), coor[0] + (my_range // 2 + 1)):
-            coor_temp = (x % size_x, y % size_y)
-            if coor_temp != coor:
-                fields_in_range.append(coor_temp)
-
-    # calculate whether those field are new fields or not
-    for i in fields_in_range:
-        for y in range(size_y):
-            for x in range(size_x):
-                temp = map[y][x]
-                if type(temp) == Node:
-                    if temp.coor == i:
-                        for ii in range(len(fields_in_range)):
-                            if fields_in_range[ii] == temp.coor:
-                                fields_in_range[ii] = 0
-                else:
-                    pass
-
-    fields_in_range = [x for x in fields_in_range if x != 0]
-
-    return len(fields_in_range)
-
 
 def reverse_command(prev_command):
     if prev_command == "up":
@@ -121,12 +85,6 @@ def draw_tile(graph, id, style, width):
     if 'path' in style and id in style['path']: r = "@"
     if id in graph.walls: r = "#" * width
     return r
-
-def draw_grid(graph, width=2, **style):
-    for y in range(graph.height):
-        for x in range(graph.width):
-            print("%%-%ds" % width % draw_tile(graph, (x, y), style, width), end="")
-        print()
 
 class SquareGrid:
     def __init__(self, width, height):
@@ -185,82 +143,6 @@ def reconstruct_path(came_from, start, goal):
     return path
 
 
-def heuristic(goal, neigb):
-    (x1, y1) = goal
-    (x2, y2) = neigb
-
-    # Ueber die Grenze x und y wenn Feldanzahl gerade
-    x_abs = abs(x1 - x2)
-    y_abs = abs(y1 - y2)
-    if size_x % 2 == 0:
-        if neigb[0] < size_x // 2 and goal[0] < size_x // 2:
-            pass
-
-        elif neigb[0] < size_x // 2 and not goal[0] < size_x // 2:
-            x_temp = neigb[0] + (size_x - 1 - goal[0]) + 1
-            x_abs = min(x_abs, x_temp)
-
-        elif neigb[0] >= size_x // 2 and goal[0] >= size_x // 2:
-            pass
-
-        elif neigb[0] >= size_x // 2 and not goal[0] >= size_x // 2:
-            x_temp = goal[0] + (size_x - 1 - neigb[0]) + 1
-            x_abs = min(x_abs, x_temp)
-    else:
-        if neigb[0] < size_x // 2 and goal[0] < size_x // 2:
-            pass
-
-        elif neigb[0] < size_x // 2 and not goal[0] < size_x // 2:
-            x_temp = neigb[0] + (size_x - 1 - goal[0]) + 1
-            x_abs = min(x_abs, x_temp)
-
-
-        elif neigb[0] > size_x // 2 and goal[0] > size_x // 2:
-            pass
-
-        elif neigb[0] > size_x // 2 and not goal[0] > size_x // 2:
-            x_temp = goal[0] + (size_x - 1 - neigb[0]) + 1
-            x_abs = min(x_abs, x_temp)
-
-        else:
-            pass
-
-    if size_y % 2 == 0:
-        if neigb[1] < size_y // 2 and goal[1] < size_y // 2:
-            pass
-
-        elif neigb[1] < size_y // 2 and not goal[1] < size_y // 2:
-            y_temp = neigb[1] + (size_y - 1 - goal[1]) + 1
-            y_abs = min(y_abs, y_temp)
-
-        elif neigb[1] >= size_y // 2 and goal[1] >= size_y // 2:
-            pass
-
-        elif neigb[1] >= size_y // 2 and not goal[1] >= size_y // 2:
-            y_temp = goal[1] + (size_y - 1 - neigb[1]) + 1
-            y_abs = min(y_abs, y_temp)
-
-    else:
-        if neigb[1] < size_y // 2 and goal[1] < size_y // 2:
-            pass
-
-        elif neigb[1] < size_y // 2 and not goal[1] < size_y // 2:
-            y_temp = neigb[1] + (size_y - 1 - goal[1]) + 1
-            y_abs = min(y_abs, y_temp)
-
-        elif neigb[1] > size_y // 2 and goal[1] > size_y // 2:
-            pass
-
-        elif neigb[1] > size_y // 2 and not goal[1] > size_y // 2:
-            y_temp = goal[1] + (size_y - 1 - neigb[1]) + 1
-            y_abs = min(y_abs, y_temp)
-
-        else:
-            pass
-
-    return x_abs + y_abs
-
-
 def a_star_search(graph, start, goal):
     frontier = PriorityQueue()
     frontier.put(start, 0)
@@ -282,25 +164,18 @@ def a_star_search(graph, start, goal):
             new_cost = cost_so_far[current] + graph.cost(current, next)
             if next not in cost_so_far or new_cost < cost_so_far[next]:
                 cost_so_far[next] = new_cost
-                priority = new_cost + heuristic(goal, next)
+                priority = new_cost
                 frontier.put(next, priority)
                 came_from[next] = current
 
     return came_from, cost_so_far
 
 def main(argv):
-    """ init-Method
-
-            Method acts as the Constructor initiates all variables
-
-            @:param argv: Arguments passed by the User
-    """
     global ip, port, size_x, size_y
     global timeout
     timeout = 0.5
     if len(argv) == 0:
-        raise ValueError("Please specify port as in >>python client-k1.py -p 5050 -s 10<<")
-    # Set port globally
+		
     try:
         ip = argv[1]
         port = int(argv[3])
@@ -308,7 +183,7 @@ def main(argv):
         size_y = int(argv[7])
 
     except Exception as e:
-        raise ValueError("Invalid Arguments")
+        raise ValueError("")
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsocket:
         try:
@@ -326,7 +201,6 @@ def main(argv):
             while True:
                 data = clientsocket.recv(1024).decode()
                 if "You" in data or "Draw" in data:
-                    print("Steps needed: ", steps)
                     sys.exit(0)
                     # bring in correct 2 dimensional form
                 if len(data) % 3 == 0:
@@ -391,12 +265,7 @@ def main(argv):
                                 elif "EC" in node.value and have_bomb == True:
                                     queue.put(node, -1000000000)
                                 else:
-                                    poss_fields = calc_possible_new_fields(node.value, node.coor, map)
-                                    way_to_field = heuristic(node.coor, (prev_x, prev_y))
-                                    queue.put(node, (poss_fields * -1) + way_to_field)
-                                    print(poss_fields, "for field:", node)
-                                    print("way to field:", way_to_field)
-                                    print()
+                                    print("")
                     next_node = queue.get()
                     start = (prev_x, prev_y)
                     goal = next_node.coor
@@ -409,22 +278,17 @@ def main(argv):
                                 node = map[y][x]
                                 if type(node) == Node:
                                     if "B" in node.value and have_bomb == False:
-                                        queue.put(node, -1000000000)
+                                        queue.put(node, -100000)
                                         bomb_node = node.coor
                                     elif "EC" in node.value and have_bomb == True:
-                                        queue.put(node, -1000000000)
+                                        queue.put(node, -100000)
                                     else:
-                                        poss_fields = calc_possible_new_fields(node.value, node.coor, map)
-                                        way_to_field = heuristic(node.coor, (prev_x, prev_y))
-                                        queue.put(node, poss_fields * -1)
+										print("")
                         next_node = queue.get()
                         start = (prev_x, prev_y)
                         goal = next_node.coor
                     came_from, cost_so_far = a_star_search(graph, start, goal)
-                    draw_grid(graph, width=3, point_to=came_from, start=start, goal=goal)
-                    draw_grid(graph, width=3, number=cost_so_far, start=start, goal=(x, y))
                     path = reconstruct_path(came_from, start=start, goal=goal)[2:]
-                    draw_grid(graph, width=3, path=path)
                     commands = create_commands(path, start)
                     clientsocket.send(commands[0].encode())
                     prev_command = commands[0]
